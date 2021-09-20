@@ -41,11 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClientVersionInfo.cs" />
-    <Compile Include="DeployLog.cs" />
-    <Compile Include="HistoryCache.cs" />
+    <Compile Include="History\ClientVersionInfo.cs" />
+    <Compile Include="History\DeployLog.cs" />
+    <Compile Include="History\HistoryCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StudioDeployLogs.cs" />
+    <Compile Include="History\StudioDeployLogs.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
