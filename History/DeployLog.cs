@@ -6,7 +6,9 @@ namespace RobloxDeployHistory
     public class DeployLog
     {
         public bool Is64Bit { get; set; }
+        public Channel Channel { get; set; }
         public string VersionGuid { get; set; }
+        public string GitHash { get; set; }
         public DateTime TimeStamp { get; set; }
 
         public int MajorRev { get; set; }

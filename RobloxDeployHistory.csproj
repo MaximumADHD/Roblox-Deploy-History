@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="History\Channel.cs" />
     <Compile Include="History\ClientVersionInfo.cs" />
     <Compile Include="History\DeployLog.cs" />
     <Compile Include="History\HistoryCache.cs" />

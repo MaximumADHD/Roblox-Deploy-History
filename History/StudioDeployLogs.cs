@@ -9,11 +9,11 @@ namespace RobloxDeployHistory
 {
     public class StudioDeployLogs
     {
-        private const string LogPattern = "New (Studio6?4?) (version-[a-f\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+)";
+        private const string LogPattern = "New (Studio6?4?) (version-[a-f\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+), git hash: ([a-f\\d]+) ...";
         private const StringComparison StringFormat = StringComparison.InvariantCulture;
         private static readonly NumberFormatInfo NumberFormat = NumberFormatInfo.InvariantInfo;
 
-        public string Branch { get; private set; }
+        public Channel Channel { get; private set; }
 
         private string LastDeployHistory = "";
         private static readonly Dictionary<string, StudioDeployLogs> LogCache = new Dictionary<string, StudioDeployLogs>();
@@ -22,10 +22,10 @@ namespace RobloxDeployHistory
 
         public HashSet<DeployLog> CurrentLogs_x64 { get; private set; } = new HashSet<DeployLog>();
 
-        private StudioDeployLogs(string branch)
+        private StudioDeployLogs(Channel channel)
         {
-            Branch = branch;
-            LogCache[branch] = this;
+            Channel = channel;
+            LogCache[channel] = this;
         }
 
         private static void MakeDistinct(HashSet<DeployLog> targetSet)
@@ -56,7 +56,7 @@ namespace RobloxDeployHistory
             rejected.ForEach(log => targetSet.Remove(log));
         }
 
-        private void UpdateLogs(string deployHistory)
+        private void UpdateLogs(Channel channel, string deployHistory)
         {
             var now = DateTime.Now;
             var matches = Regex.Matches(deployHistory, LogPattern);
@@ -83,22 +83,11 @@ namespace RobloxDeployHistory
                     MajorRev = int.Parse(data[4], NumberFormat),
                     Version = int.Parse(data[5], NumberFormat),
                     Patch = int.Parse(data[6], NumberFormat),
-                    Changelist = int.Parse(data[7], NumberFormat)
+                    Changelist = int.Parse(data[7], NumberFormat),
+
+                    Channel = channel,
+                    GitHash = data[8]
                 };
-
-                // olive71 (Ganesh) said we should expect builds older than ~3 months to be deleted.
-                // Although in practice this isn't consistently done, it's better to be safe than sorry.
-                // https://devforum.roblox.com/t/previous-roblox-builds-missing-from-deployment-server/469698/3
-
-                var timespan = now - deployLog.TimeStamp;
-
-                if (timespan.TotalDays > 90)
-                    continue;
-
-                // Unverified builds might need a moment.
-
-                if (timespan.TotalMinutes < 5)
-                    continue;
 
                 HashSet<DeployLog> targetList;
 
@@ -114,22 +103,22 @@ namespace RobloxDeployHistory
             MakeDistinct(CurrentLogs_x86);
         }
 
-        public static async Task<StudioDeployLogs> Get(string branch)
+        public static async Task<StudioDeployLogs> Get(Channel channel)
         {
             StudioDeployLogs logs;
 
-            if (LogCache.ContainsKey(branch))
-                logs = LogCache[branch];
+            if (LogCache.ContainsKey(channel))
+                logs = LogCache[channel];
             else
-                logs = new StudioDeployLogs(branch);
+                logs = new StudioDeployLogs(channel);
 
-            var getDeployHistory = HistoryCache.GetDeployHistory(branch);
+            var getDeployHistory = HistoryCache.GetDeployHistory(channel);
             string deployHistory = await getDeployHistory.ConfigureAwait(false);
 
             if (logs.LastDeployHistory != deployHistory)
             {
                 logs.LastDeployHistory = deployHistory;
-                logs.UpdateLogs(deployHistory);
+                logs.UpdateLogs(channel, deployHistory);
             }
 
             return logs;

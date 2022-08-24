@@ -7,30 +7,29 @@ namespace RobloxDeployHistory
 {
     public class HistoryCache
     {
-        private static readonly Dictionary<string, HistoryCache> BranchCache = new Dictionary<string, HistoryCache>();
+        private static readonly Dictionary<string, HistoryCache> ChannelCache = new Dictionary<string, HistoryCache>();
 
-        public string Branch { get; private set; }
+        public Channel Channel { get; private set; }
         public string History { get; private set; }
         public DateTime LastUpdate { get; private set; }
 
-        private HistoryCache(string branch)
+        private HistoryCache(Channel channel)
         {
-            Branch = branch;
+            Channel = channel;
             LastUpdate = DateTime.FromFileTimeUtc(0);
-
-            BranchCache.Add(branch, this);
+            ChannelCache.Add(channel, this);
         }
 
-        public static async Task<string> GetDeployHistory(string branch)
+        public static async Task<string> GetDeployHistory(Channel channel)
         {
             var deployHistory = Task.Run(() =>
             {
                 HistoryCache cache = null;
 
-                if (BranchCache.ContainsKey(branch))
-                    cache = BranchCache[branch];
+                if (ChannelCache.ContainsKey(channel))
+                    cache = ChannelCache[channel];
                 else
-                    cache = new HistoryCache(branch);
+                    cache = new HistoryCache(channel);
 
                 lock (cache)
                 {
@@ -38,7 +37,7 @@ namespace RobloxDeployHistory
 
                     if (timeDiff.TotalMinutes > 5)
                     {
-                        string historyEndpoint = $"https://s3.amazonaws.com/setup.{branch}.com/DeployHistory.txt";
+                        string historyEndpoint = $"https://setup.rbxcdn.com/channel/{channel}/DeployHistory.txt";
 
                         using (WebClient http = new WebClient())
                             cache.History = http.DownloadString(historyEndpoint);
