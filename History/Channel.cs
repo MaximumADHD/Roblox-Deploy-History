@@ -7,10 +7,16 @@
     {
         public readonly string Name;
 
+        public static string Format(string channel)
+        {
+            return channel.ToLowerInvariant().Trim();
+        }
+
         public Channel(string channel)
         {
-            Name = channel.ToLowerInvariant();
+            Name = Format(channel);
         }
+
 
         public override string ToString()
         {
