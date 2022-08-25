@@ -37,7 +37,7 @@ namespace RobloxDeployHistory
 
                     if (timeDiff.TotalMinutes > 5)
                     {
-                        string historyEndpoint = $"https://setup.rbxcdn.com/channel/{channel}/DeployHistory.txt";
+                        string historyEndpoint = $"{channel.BaseUrl}/DeployHistory.txt";
 
                         using (WebClient http = new WebClient())
                             cache.History = http.DownloadString(historyEndpoint);
