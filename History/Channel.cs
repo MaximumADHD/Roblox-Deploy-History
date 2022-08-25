@@ -18,7 +18,6 @@
 
             switch (Name)
             {
-                case "zlive":
                 case "roblox":
                 {
                     Name = "live";
