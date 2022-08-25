@@ -43,10 +43,10 @@
         {
             get
             {
-                string baseUrl = "https://setup.rbxcdn.com/";
+                string baseUrl = "https://setup.rbxcdn.com";
 
                 if (Name != "live")
-                    baseUrl += $"channel/{Name}/";
+                    baseUrl += $"channel/{Name}";
 
                 return baseUrl;
             }
