@@ -15,6 +15,41 @@
         public Channel(string channel)
         {
             Name = Format(channel);
+
+            switch (Name)
+            {
+                case "zlive":
+                case "roblox":
+                {
+                    Name = "live";
+                    break;
+                }
+
+                case "sitetest1.robloxlabs":
+                {
+                    Name = "zcanary";
+                    break;
+                }
+
+                case "sitetest2.robloxlabs":
+                {
+                    Name = "zintegration";
+                    break;
+                }
+            }
+        }
+
+        public string BaseUrl
+        {
+            get
+            {
+                string baseUrl = "https://setup.rbxcdn.com/";
+
+                if (Name != "live")
+                    baseUrl += $"channel/{Name}/";
+
+                return baseUrl;
+            }
         }
 
 
