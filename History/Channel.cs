@@ -38,6 +38,17 @@
             }
         }
 
+        public override bool Equals(object obj)
+        {
+            Channel channel = obj.ToString();
+            return Name == channel.Name;
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
+        }
+
         public string BaseUrl
         {
             get
