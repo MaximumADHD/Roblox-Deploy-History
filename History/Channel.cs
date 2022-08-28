@@ -1,7 +1,9 @@
 ﻿namespace RobloxDeployHistory
 {
-    // This class aggressively enforces channel
-    // names being lowercase no matter what.
+    // This class aggressively enforces channel names 
+    // being lowercase no matter what. It also handles
+    // implicit loose string equality of channel names,
+    // and provides backwards compatibility for branches.
 
     public class Channel
     {
@@ -31,6 +33,7 @@
                 }
 
                 case "sitetest2.robloxlabs":
+                case "sitetest3.robloxlabs":
                 {
                     Name = "zintegration";
                     break;
