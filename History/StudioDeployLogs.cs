@@ -90,17 +90,6 @@ namespace RobloxDeployHistory
             CurrentLogs_x86.Clear();
             CurrentLogs_x64.Clear();
 
-            if (Environment.Is64BitOperatingSystem)
-            {
-                var liveInfo_x64 = await GetLiveLog(channel, "WindowsStudio64");
-                CurrentLogs_x64.Add(liveInfo_x64);
-            }
-            else
-            {
-                var liveInfo_x86 = await GetLiveLog(channel, "WindowsStudio");
-                CurrentLogs_x86.Add(liveInfo_x86);
-            }
-
             foreach (Match match in matches)
             {
                 string[] data = match.Groups.Cast<Group>()
@@ -137,6 +126,17 @@ namespace RobloxDeployHistory
                     targetList = CurrentLogs_x86;
 
                 targetList.Add(deployLog);
+            }
+
+            if (Environment.Is64BitOperatingSystem)
+            {
+                var liveInfo_x64 = await GetLiveLog(channel, "WindowsStudio64");
+                CurrentLogs_x64.Add(liveInfo_x64);
+            }
+            else
+            {
+                var liveInfo_x86 = await GetLiveLog(channel, "WindowsStudio");
+                CurrentLogs_x86.Add(liveInfo_x86);
             }
 
             MakeDistinct(CurrentLogs_x64);
