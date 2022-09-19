@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -9,7 +10,7 @@ namespace RobloxDeployHistory
 {
     public class StudioDeployLogs
     {
-        private const string LogPattern = "New (Studio6?4?) (version-[a-f\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+), git hash: ([a-f\\d]+) ...";
+        private const string LogPattern = "New (Studio6?4?) (version-[A-z\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+), git hash: ([a-f\\d]+) ...";
         private const StringComparison StringFormat = StringComparison.InvariantCulture;
         private static readonly NumberFormatInfo NumberFormat = NumberFormatInfo.InvariantInfo;
 
@@ -56,13 +57,49 @@ namespace RobloxDeployHistory
             rejected.ForEach(log => targetSet.Remove(log));
         }
 
-        private void UpdateLogs(Channel channel, string deployHistory)
+        private async Task<DeployLog> GetLiveLog(Channel channel, string binaryType)
+        {
+            var info = await ClientVersionInfo.Get(channel, binaryType);
+
+            var versionData = info.Version
+                .Split('.')
+                .Select(int.Parse)
+                .ToArray();
+
+            return new DeployLog()
+            {
+                Is64Bit = binaryType.EndsWith("64", StringFormat),
+                VersionGuid = info.VersionGuid,
+                TimeStamp = DateTime.Now,
+
+                MajorRev = versionData[0],
+                Version = versionData[1],
+                Patch = versionData[2],
+                Changelist = versionData[3],
+
+                Channel = channel,
+                GitHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            };
+        }
+
+        private async Task UpdateLogs(Channel channel, string deployHistory)
         {
             var now = DateTime.Now;
             var matches = Regex.Matches(deployHistory, LogPattern);
 
             CurrentLogs_x86.Clear();
             CurrentLogs_x64.Clear();
+
+            if (Environment.Is64BitOperatingSystem)
+            {
+                var liveInfo_x64 = await GetLiveLog(channel, "WindowsStudio64");
+                CurrentLogs_x64.Add(liveInfo_x64);
+            }
+            else
+            {
+                var liveInfo_x86 = await GetLiveLog(channel, "WindowsStudio");
+                CurrentLogs_x86.Add(liveInfo_x86);
+            }
 
             foreach (Match match in matches)
             {
@@ -72,12 +109,14 @@ namespace RobloxDeployHistory
                     .ToArray();
 
                 string buildType = data[1];
-                bool is64Bit = buildType.EndsWith("64", StringFormat);
+                string versionGuid = data[2];
+
+                if (versionGuid.ToLowerInvariant() == "version-hidden")
+                    continue;
 
                 var deployLog = new DeployLog()
                 {
-                    Is64Bit = is64Bit,
-                    VersionGuid = data[2],
+                    VersionGuid = versionGuid,
                     TimeStamp = DateTime.Parse(data[3], DateTimeFormatInfo.InvariantInfo),
 
                     MajorRev = int.Parse(data[4], NumberFormat),
@@ -85,6 +124,7 @@ namespace RobloxDeployHistory
                     Patch = int.Parse(data[6], NumberFormat),
                     Changelist = int.Parse(data[7], NumberFormat),
 
+                    Is64Bit = buildType.EndsWith("64", StringFormat),
                     Channel = channel,
                     GitHash = data[8]
                 };
@@ -118,7 +158,7 @@ namespace RobloxDeployHistory
             if (logs.LastDeployHistory != deployHistory)
             {
                 logs.LastDeployHistory = deployHistory;
-                logs.UpdateLogs(channel, deployHistory);
+                await logs.UpdateLogs(channel, deployHistory);
             }
 
             return logs;
