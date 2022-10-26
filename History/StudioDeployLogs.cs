@@ -132,6 +132,10 @@ namespace RobloxDeployHistory
                         GitHash = data[8]
                     };
 
+                    // Block builds before 550 due to RCE.
+                    if (deployLog.Version < 550)
+                        continue;
+
                     HashSet<DeployLog> targetList;
 
                     if (deployLog.Is64Bit)
