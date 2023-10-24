@@ -9,7 +9,7 @@ namespace RobloxDeployHistory
 {
     public class StudioDeployLogs
     {
-        private const string LogPattern = "New (Studio6?4?) (version-[A-z\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+), git hash: ([a-f\\d]+) ...";
+        private const string LogPattern = "New (Studio6?4?) (version-[A-z\\d]+) at (\\d+/\\d+/\\d+ \\d+:\\d+:\\d+ [A,P]M), file version: (\\d+), (\\d+), (\\d+), (\\d+)";
         private const StringComparison StringFormat = StringComparison.InvariantCulture;
         private static readonly NumberFormatInfo NumberFormat = NumberFormatInfo.InvariantInfo;
 
@@ -129,12 +129,7 @@ namespace RobloxDeployHistory
 
                         Is64Bit = buildType.EndsWith("64", StringFormat),
                         Channel = channel,
-                        GitHash = data[8]
                     };
-
-                    // Block builds before 550 due to RCE.
-                    if (deployLog.Version < 550)
-                        continue;
 
                     HashSet<DeployLog> targetList;
 
