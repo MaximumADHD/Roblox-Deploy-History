@@ -80,7 +80,7 @@ namespace RobloxDeployHistory
             };
         }
 
-        private async Task UpdateLogs(Channel channel, string deployHistory)
+        private async Task UpdateLogs(Channel channel, string deployHistory, bool allowUnsupported = false)
         {
             CurrentLogs_x86.Clear();
             CurrentLogs_x64.Clear();
@@ -103,6 +103,7 @@ namespace RobloxDeployHistory
             else
             {
                 var matches = Regex.Matches(deployHistory, LogPattern);
+                var unsupported = await VersionSupport.GetUnsupportedRangeAsync();
 
                 foreach (Match match in matches)
                 {
@@ -130,6 +131,11 @@ namespace RobloxDeployHistory
                         Is64Bit = buildType.EndsWith("64", StringFormat),
                         Channel = channel,
                     };
+
+                    if (!allowUnsupported)
+                        if (deployLog.Version >= unsupported.Min)
+                            if (deployLog.Version <= unsupported.Max)
+                                continue;
 
                     HashSet<DeployLog> targetList;
 

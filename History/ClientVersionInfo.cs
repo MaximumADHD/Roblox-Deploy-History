@@ -1,17 +1,31 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace RobloxDeployHistory
 {
+    public class ClientVersionHttpError
+    {
+        public int Code = 0;
+        public string Message = "";
+    }
+
     public class ClientVersionInfo
     {
         private class ClientVersionResponse
         {
             public string Version = "";
             public string ClientVersionUpload = "";
+
+            public List<ClientVersionHttpError> Errors = new List<ClientVersionHttpError>();
+            public bool Success => !Errors.Any();
         }
+
+        public bool Success => !Errors.Any();
+        public List<ClientVersionHttpError> Errors { get; private set; }
 
         public Channel Channel { get; private set; }
         public string Version { get; private set; }
@@ -22,6 +36,7 @@ namespace RobloxDeployHistory
             Channel = channel;
             Version = version;
             VersionGuid = versionGuid;
+            Errors = new List<ClientVersionHttpError>();
         }
 
         public ClientVersionInfo(DeployLog log)
@@ -30,11 +45,14 @@ namespace RobloxDeployHistory
             VersionGuid = log.VersionGuid;
             Version = log.VersionId;
             Channel = log.Channel;
+
+            Errors = new List<ClientVersionHttpError>();
         }
 
         private ClientVersionInfo(Channel channel, ClientVersionResponse response)
         {
             Channel = channel;
+            Errors = response.Errors;
             Version = response.Version;
             VersionGuid = response.ClientVersionUpload;
         }
