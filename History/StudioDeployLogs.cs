@@ -132,10 +132,16 @@ namespace RobloxDeployHistory
                         Channel = channel,
                     };
 
-                    if (!allowUnsupported)
-                        if (deployLog.Version >= unsupported.Min)
-                            if (deployLog.Version <= unsupported.Max)
+                    if (deployLog.Version >= unsupported.Min)
+                    {
+                        if (deployLog.Version <= unsupported.Max)
+                        {
+                            if (!allowUnsupported)
                                 continue;
+
+                            deployLog.Unsupported = true;
+                        }
+                    }
 
                     HashSet<DeployLog> targetList;
 

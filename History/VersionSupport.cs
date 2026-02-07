@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,8 +11,7 @@ namespace RobloxDeployHistory
 {
     public struct UnsupportedRange
     {
-        public uint Min;
-        public uint Max;
+        public uint Min, Max;
     }
 
     public static class VersionSupport
@@ -24,48 +21,51 @@ namespace RobloxDeployHistory
 
         public static async Task<UnsupportedRange> GetUnsupportedRangeAsync()
         {
-            var json = await http.DownloadStringTaskAsync(Url);
+            var range = new UnsupportedRange();
 
-            using (var reader = new StringReader(json))
-            using (var jsonReader = new JsonTextReader(reader))
+            try
             {
-                var data = JObject.Load(jsonReader);
-                var metadataType = data.Value<string>("Type");
-                string blob = "";
+                var json = await http.DownloadStringTaskAsync(Url);
 
-                switch (metadataType)
+                using (var reader = new StringReader(json))
+                using (var jsonReader = new JsonTextReader(reader))
                 {
-                    case "Unified":
-                    {
-                        blob = data.Value<string>("Value");
-                        break;
-                    }
-                    case "Channels":
-                    {
-                        var channel = data.SelectToken("Value");
-                        blob = channel.Value<string>("LIVE");
-                        break;
-                    }
-                    case "Platforms":
-                    {
-                        var platforms = data.SelectToken("Value");
-                        blob = platforms.Value<string>("PCStudioApp");
-                        break;
-                    }
-                    case "ChannelsAndPlatforms":
-                    {
-                        var channels = data.SelectToken("Value");
-                        var platform = channels.SelectToken("LIVE");
+                    var data = JObject.Load(jsonReader);
+                    var metadataType = data.Value<string>("Type");
+                    string blob = "";
 
-                        blob = platform.Value<string>("PCStudioApp");
-                        break;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(blob))
-                {
-                    try
+                    switch (metadataType)
                     {
+                        case "Unified":
+                        {
+                            blob = data.Value<string>("Value");
+                            break;
+                        }
+                        case "Channels":
+                        {
+                            var channel = data.SelectToken("Value");
+                            blob = channel.Value<string>("LIVE");
+                            break;
+                        }
+                        case "Platforms":
+                        {
+                            var platforms = data.SelectToken("Value");
+                            blob = platforms.Value<string>("PCStudioApp");
+                            break;
+                        }
+                        case "ChannelsAndPlatforms":
+                        {
+                            var channels = data.SelectToken("Value");
+                            var platform = channels.SelectToken("LIVE");
+
+                            blob = platform.Value<string>("PCStudioApp");
+                            break;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(blob))
+                    {
+                    
                         var buf = Convert.FromBase64String(blob);
                         string supportJson = Encoding.UTF8.GetString(buf);
 
@@ -77,21 +77,22 @@ namespace RobloxDeployHistory
                             var rawVersionStart = jsonSupportData.Value<string>("versionStart");
                             var rawVersionEnd = jsonSupportData.Value<string>("versionEnd");
 
-                            return new UnsupportedRange()
-                            {
-                                Min = uint.Parse(rawVersionStart.Split('.')[1]),
-                                Max = uint.Parse(rawVersionEnd.Split('.')[1]),
-                            };
+                            var versionStart = uint.Parse(rawVersionStart.Split('.')[1]);
+                            var versionEnd = uint.Parse(rawVersionEnd.Split('.')[1]);
+
+                            range.Min = versionStart;
+                            range.Max = versionEnd;
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Could not load version support data: {ex.Message}");
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                // TODO: Handle this more explicitly?
+                Console.WriteLine($"Could not load version support data: {ex.Message}");
+            }
 
-            return new UnsupportedRange();
+            return range;
         }
     }
 }

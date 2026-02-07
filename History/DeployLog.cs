@@ -17,6 +17,7 @@ namespace RobloxDeployHistory
         public int Changelist { get; set; }
 
         public string VersionId => string.Join(".", MajorRev, Version, Patch, Changelist);
+        public bool Unsupported { get; set; } = false;
 
         public override string ToString()
         {
