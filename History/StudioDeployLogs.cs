@@ -17,6 +17,7 @@ namespace RobloxDeployHistory
         public bool HasHistory { get; private set; }
 
         private string LastDeployHistory = "";
+        private bool AllowUnsupported = false;
         private static readonly Dictionary<string, StudioDeployLogs> LogCache = new Dictionary<string, StudioDeployLogs>();
 
         public HashSet<DeployLog> CurrentLogs_x86 { get; private set; } = new HashSet<DeployLog>();
@@ -160,7 +161,7 @@ namespace RobloxDeployHistory
             }
         }
 
-        public static async Task<StudioDeployLogs> Get(Channel channel)
+        public static async Task<StudioDeployLogs> Get(Channel channel, bool allowUnsupported = false)
         {
             StudioDeployLogs logs;
 
@@ -171,10 +172,11 @@ namespace RobloxDeployHistory
 
             string deployHistory = await HistoryCache.GetDeployHistory(channel);
 
-            if (logs.LastDeployHistory != deployHistory)
+            if (logs.LastDeployHistory != deployHistory || logs.AllowUnsupported != allowUnsupported)
             {
                 logs.LastDeployHistory = deployHistory;
-                await logs.UpdateLogs(channel, deployHistory);
+                logs.AllowUnsupported = allowUnsupported;
+                await logs.UpdateLogs(channel, deployHistory, allowUnsupported);
             }
 
             return logs;
