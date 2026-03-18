@@ -1,10 +1,13 @@
-﻿namespace RobloxDeployHistory
+﻿using System;
+
+namespace RobloxDeployHistory
 {
     // This class aggressively enforces channel names 
     // being lowercase no matter what. It also handles
     // implicit loose string equality of channel names,
     // and provides backwards compatibility for branches.
 
+    [Obsolete]
     public class Channel
     {
         public readonly string Name;

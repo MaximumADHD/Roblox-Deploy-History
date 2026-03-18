@@ -1,28 +1,26 @@
 ﻿using System;
-using System.Globalization;
 
 namespace RobloxDeployHistory
 {
     public class DeployLog
     {
-        public bool Is64Bit { get; set; }
-        public Channel Channel { get; set; }
         public string VersionGuid { get; set; }
-        public string GitHash { get; set; }
-        public DateTime TimeStamp { get; set; }
 
         public int MajorRev { get; set; }
         public int Version { get; set; }
         public int Patch { get; set; }
-        public int Changelist { get; set; }
+        public int CommitId { get; set; }
 
-        public string VersionId => string.Join(".", MajorRev, Version, Patch, Changelist);
+        [Obsolete]
+        public int Changelist
+        {
+            get => CommitId;
+            set => CommitId = value;
+        }
+
+        public string VersionId => string.Join(".", MajorRev, Version, Patch, CommitId);
         public bool Unsupported { get; set; } = false;
 
-        public override string ToString()
-        {
-            string date = TimeStamp.ToString("MMM dd", CultureInfo.InvariantCulture);
-            return $"{VersionId} ({date})";
-        }
+        public override string ToString() => VersionId;
     }
 }
