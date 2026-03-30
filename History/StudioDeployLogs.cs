@@ -16,6 +16,7 @@ namespace RobloxDeployHistory
 
         public bool HasHistory => CurrentLogs.Count > 0;
         public string LastDeployHistory { get; private set; } = "";
+        public string LastVersionGuid { get; private set; } = "";
 
         private bool AllowUnsupported = false;
         private static Dictionary<bool, StudioDeployLogs> LogCache = new Dictionary<bool, StudioDeployLogs>();
@@ -40,14 +41,16 @@ namespace RobloxDeployHistory
                 logs = new StudioDeployLogs(allowUnsupported);
 
             string jsonHistory = await HistoryCache.Get();
+            var latest = await ClientVersionInfo.Get();
 
-            if (logs.LastDeployHistory != jsonHistory || logs.AllowUnsupported != allowUnsupported)
+            if (logs.LastDeployHistory != jsonHistory || logs.AllowUnsupported != allowUnsupported || latest.VersionGuid != logs.LastVersionGuid)
             {
                 var unsupported = await VersionSupport.GetUnsupportedRangeAsync();
                 logs.CurrentLogs.Clear();
 
                 logs.LastDeployHistory = jsonHistory;
                 logs.AllowUnsupported = allowUnsupported;
+                logs.LastVersionGuid = latest.VersionGuid;
 
                 using (var reader = new StringReader(jsonHistory))
                 using (var jsonReader = new JsonTextReader(reader))
@@ -78,6 +81,32 @@ namespace RobloxDeployHistory
 
                         logs.CurrentLogs.Add(log);
                     }
+                }
+
+                var latestGuid = latest.VersionGuid;
+
+                var foundInLogs = logs.CurrentLogs
+                    .Where(log => log.VersionGuid == latestGuid)
+                    .Any();
+
+                if (!foundInLogs)
+                {
+                    var versionId = latest.Version;
+
+                    var versionData = versionId.Split('.')
+                        .Select(int.Parse)
+                        .ToArray();
+
+                    var latestLog = new DeployLog()
+                    {
+                        VersionGuid = latestGuid,
+                        MajorRev = versionData[0],
+                        Version = versionData[1],
+                        Patch = versionData[2],
+                        CommitId = versionData[3],
+                    };
+
+                    logs.CurrentLogs.Add(latestLog);
                 }
             }
 
