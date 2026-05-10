@@ -7,7 +7,6 @@ namespace RobloxDeployHistory
     // implicit loose string equality of channel names,
     // and provides backwards compatibility for branches.
 
-    [Obsolete]
     public class Channel
     {
         public readonly string Name;

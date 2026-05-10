@@ -40,8 +40,19 @@ namespace RobloxDeployHistory
             if (!LogCache.TryGetValue(allowUnsupported, out StudioDeployLogs logs))
                 logs = new StudioDeployLogs(allowUnsupported);
 
-            string jsonHistory = await HistoryCache.Get();
             var latest = await ClientVersionInfo.Get();
+
+            try
+            {
+                var latestBeta = await ClientVersionInfo.Get("zbeta");
+                latest = latestBeta.Success ? latestBeta : latest;
+            }
+            catch
+            {
+                // zbeta is offline, nothing to do here.
+            }
+
+            string jsonHistory = await HistoryCache.Get();
 
             if (logs.LastDeployHistory != jsonHistory || logs.AllowUnsupported != allowUnsupported || latest.VersionGuid != logs.LastVersionGuid)
             {
@@ -119,7 +130,7 @@ namespace RobloxDeployHistory
             return await Get(allowUnsupported);
         }
 
-        public static async Task<string> AppendToHistoryLedger(string jsonHistory)
+        public static async Task<string> AppendToHistoryLedger(string jsonHistory, string pendingVersion = null, string pendingGuid = null)
         {
             var liveInfo = await ClientVersionInfo.Get();
 
@@ -128,6 +139,9 @@ namespace RobloxDeployHistory
                 : new Dictionary<string, string>();
 
             historyMap[liveInfo.Version] = liveInfo.VersionGuid;
+
+            if (pendingGuid != null && pendingVersion != null)
+                historyMap[pendingVersion] = pendingGuid;
 
             var orderedPairs = historyMap
                 .OrderBy(pair => pair.Key, StringComparer.Ordinal)

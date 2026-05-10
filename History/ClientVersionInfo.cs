@@ -53,12 +53,18 @@ namespace RobloxDeployHistory
             VersionGuid = response.ClientVersionUpload;
         }
 
-        public static async Task<ClientVersionInfo> Get(string binaryType = "WindowsStudio64")
+        public static async Task<ClientVersionInfo> Get(string channel = "LIVE", string binaryType = "WindowsStudio64")
         {
             using (var http = new WebClient())
             {
-                string json = await http.DownloadStringTaskAsync($"https://clientsettings.roblox.com/v2/client-version/{binaryType}");
+                string url = $"https://clientsettings.roblox.com/v2/client-version/{binaryType}";
+
+                if (channel.ToLowerInvariant() != "live")
+                    url += $"/channel/{channel}";
+
+                string json = await http.DownloadStringTaskAsync(url);
                 var response = JsonConvert.DeserializeObject<ClientVersionResponse>(json);
+
                 return new ClientVersionInfo(response);
             }
         }
@@ -66,7 +72,7 @@ namespace RobloxDeployHistory
         [Obsolete]
         public static async Task<ClientVersionInfo> Get(Channel channel, string binaryType = "WindowsStudio64")
         {
-            return await Get(binaryType);
+            return await Get(binaryType, channel);
         }
     }
 }
