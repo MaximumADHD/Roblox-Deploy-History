@@ -17,6 +17,7 @@ namespace RobloxDeployHistory
         public bool HasHistory => CurrentLogs.Count > 0;
         public string LastDeployHistory { get; private set; } = "";
         public string LastVersionGuid { get; private set; } = "";
+        public string ChannelName { get; private set; } = "";
 
         private bool AllowUnsupported = false;
         private static Dictionary<bool, StudioDeployLogs> LogCache = new Dictionary<bool, StudioDeployLogs>();
@@ -35,12 +36,23 @@ namespace RobloxDeployHistory
             LogCache[allowUnsupported] = this;
         }
 
-        public static async Task<StudioDeployLogs> Get(bool allowUnsupported = false)
+        public static async Task<StudioDeployLogs> Get(bool allowUnsupported = false, string channelName = "LIVE", string channelToken = "")
         {
             if (!LogCache.TryGetValue(allowUnsupported, out StudioDeployLogs logs))
                 logs = new StudioDeployLogs(allowUnsupported);
 
-            var latest = await ClientVersionInfo.Get();
+            var latest = new ClientVersionInfo("", "");
+
+            // Try with the given channel first
+            try
+            {
+                latest = await ClientVersionInfo.Get(channelName, "WindowsStudio64", channelToken);
+            }
+            catch
+            {
+                // Invalid channel or token, fallback to LIVE
+                latest = await ClientVersionInfo.Get("LIVE", "WindowsStudio64");
+            }
 
             try
             {
@@ -51,6 +63,8 @@ namespace RobloxDeployHistory
             {
                 // zbeta is offline, nothing to do here.
             }
+
+            logs.ChannelName = latest.ChannelName;
 
             string jsonHistory = await HistoryCache.Get();
 
