@@ -1,0 +1,76 @@
+name: Release Roblox Deploy History
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.cs"
+      - "**/*.csproj"
+      - "**/*.sln"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-deploy-history
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish release library
+        run: dotnet publish RobloxDeployHistory.csproj --configuration Release --self-contained false --output publish
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-library
+          path: |
+            publish/RobloxDeployHistory.dll
+            publish/Newtonsoft.Json.dll
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-library
+          path: artifacts
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          tag="$(date -u +v%Y.%m.%d).${RELEASE_COMMIT:0:7}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" artifacts/* --clobber
+              gh release edit "$tag" --draft=false --prerelease=false --latest
+          else
+              gh release create "$tag" artifacts/* \
+                --target "$RELEASE_COMMIT" --title "$tag" \
+                --generate-notes --latest
+          fi

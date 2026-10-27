@@ -40,11 +40,13 @@ namespace RobloxDeployHistory
                 logs = new StudioDeployLogs(allowUnsupported);
 
             var latest = new ClientVersionInfo("", "");
+            var channelTokenWasValid = false;
 
             // Try with the given channel first
             try
             {
                 latest = await ClientVersionInfo.Get(channelName, "WindowsStudio64", channelToken);
+                channelTokenWasValid = (channelToken != "" && channelName != "LIVE");
             }
             catch
             {
@@ -52,7 +54,7 @@ namespace RobloxDeployHistory
                 latest = await ClientVersionInfo.Get("LIVE", "WindowsStudio64");
             }
 
-            if (string.IsNullOrEmpty(channelToken))
+            if (!channelTokenWasValid)
             {
                 try
                 {
@@ -64,10 +66,9 @@ namespace RobloxDeployHistory
                     // zbeta is offline, nothing to do here.
                 }
             }
-            
-            logs.ChannelName = latest.ChannelName;
 
             string jsonHistory = await HistoryCache.Get();
+            logs.ChannelName = latest.ChannelName;
 
             if (logs.LastDeployHistory != jsonHistory || logs.AllowUnsupported != allowUnsupported || latest.VersionGuid != logs.LastVersionGuid)
             {
@@ -133,6 +134,7 @@ namespace RobloxDeployHistory
                     };
 
                     logs.CurrentLogs.Add(latestLog);
+                    logs.LastVersionGuid = latestGuid;
                 }
             }
 
