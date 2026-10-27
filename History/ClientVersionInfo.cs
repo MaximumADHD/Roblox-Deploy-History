@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -37,14 +37,14 @@ namespace RobloxDeployHistory
         {
             Version = version;
             VersionGuid = versionGuid;
-            Errors = new List<ClientVersionHttpError>();
+            Errors = [];
         }
 
         public ClientVersionInfo(DeployLog log)
         {
             Version = log.VersionId;
             VersionGuid = log.VersionGuid;
-            Errors = new List<ClientVersionHttpError>();
+            Errors = [];
         }
 
         private ClientVersionInfo(ClientVersionResponse response, string channel = "LIVE")
@@ -57,16 +57,19 @@ namespace RobloxDeployHistory
 
         public static async Task<ClientVersionInfo> Get(string channel = "LIVE", string binaryType = "WindowsStudio64", string channelToken = "")
         {
-            using (var http = new WebClient())
+            using (var http = new HttpClient())
             {
-                if (!string.IsNullOrEmpty(channelToken)) http.Headers.Add("roblox-channel-token", channelToken);
+                if (!string.IsNullOrEmpty(channelToken))
+                    http.DefaultRequestHeaders.Add("roblox-channel-token", channelToken);
+
                 string url = $"https://clientsettings.roblox.com/v2/client-version/{binaryType}";
 
                 if (channel.ToLowerInvariant() != "live")
                     url += $"/channel/{channel}";
 
-                string json = await http.DownloadStringTaskAsync(url);
+                var json = await http.GetStringAsync(url);
                 var response = JsonConvert.DeserializeObject<ClientVersionResponse>(json);
+
                 return new ClientVersionInfo(response, channel);
             }
         }

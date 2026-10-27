@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,9 +12,6 @@ namespace RobloxDeployHistory
 {
     public class StudioDeployLogs
     {
-        private static readonly NumberFormatInfo NumberFormat = NumberFormatInfo.InvariantInfo;
-        private const StringComparison StringFormat = StringComparison.InvariantCulture;
-
         public bool HasHistory => CurrentLogs.Count > 0;
         public string LastDeployHistory { get; private set; } = "";
         public string LastVersionGuid { get; private set; } = "";
@@ -54,16 +52,19 @@ namespace RobloxDeployHistory
                 latest = await ClientVersionInfo.Get("LIVE", "WindowsStudio64");
             }
 
-            try
+            if (string.IsNullOrEmpty(channelToken))
             {
-                var latestBeta = await ClientVersionInfo.Get("zbeta");
-                latest = latestBeta.Success ? latestBeta : latest;
+                try
+                {
+                    var latestBeta = await ClientVersionInfo.Get("zbeta");
+                    latest = latestBeta.Success ? latestBeta : latest;
+                }
+                catch
+                {
+                    // zbeta is offline, nothing to do here.
+                }
             }
-            catch
-            {
-                // zbeta is offline, nothing to do here.
-            }
-
+            
             logs.ChannelName = latest.ChannelName;
 
             string jsonHistory = await HistoryCache.Get();

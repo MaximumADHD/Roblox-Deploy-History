@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Net;
+using System.Net.Http;
 
 using Newtonsoft.Json;
 
@@ -36,26 +36,23 @@ namespace RobloxDeployHistory
 
         public static async Task<BuildMetadata> GetBuildMetadata(BuildGroup group = BuildGroup.Legacy)
         {
-            string groupName = Enum.GetName(typeof(BuildGroup), group).ToLowerInvariant();
+            using var http = new HttpClient();
+
+            string groupName = Enum.GetName(group).ToLowerInvariant();
             string url = $"{BASE_URL}/data/{groupName}/metadata.json";
 
-            using (var http = new WebClient())
-            {
-                var json = await http.DownloadStringTaskAsync(url);
-                return JsonConvert.DeserializeObject<BuildMetadata>(json);
-            }
+            var json = await http.GetStringAsync(url);
+            return JsonConvert.DeserializeObject<BuildMetadata>(json);
         }
 
         public static async Task<string> GetFile(string guid, string file, BuildGroup group = BuildGroup.Legacy)
         {
-            string groupName = Enum.GetName(typeof(BuildGroup), group).ToLowerInvariant();
+            using var http = new HttpClient();
+
+            string groupName = Enum.GetName(group).ToLowerInvariant();
             string url = $"{BASE_URL}/data/{groupName}/builds/{guid}/{file}";
 
-            using (var http = new WebClient())
-            {
-                var data = await http.DownloadStringTaskAsync(url);
-                return data;
-            }
+            return await http.GetStringAsync(url);
         }
     }
 }

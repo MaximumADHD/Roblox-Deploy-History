@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace RobloxDeployHistory
@@ -17,8 +17,8 @@ namespace RobloxDeployHistory
 
             if (timeDiff.TotalMinutes > 5)
             {
-                using (WebClient http = new WebClient())
-                    History = await http.DownloadStringTaskAsync(HistoryUrl);
+                using (HttpClient http = new HttpClient())
+                    History = await http.GetStringAsync(HistoryUrl);
 
                 LastUpdate = DateTime.Now;
             }
